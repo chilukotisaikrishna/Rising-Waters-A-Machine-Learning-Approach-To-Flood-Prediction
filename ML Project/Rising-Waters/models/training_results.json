@@ -1,0 +1,30 @@
+{
+  "run_timestamp": "2026-02-27T15:39:08.341883Z",
+  "best_model": "random_forest",
+  "metrics": [
+    {
+      "model": "log_reg",
+      "accuracy": 0.8895631067961165,
+      "f1": 0.40522875816993464,
+      "roc_auc": 0.8176120684368676
+    },
+    {
+      "model": "random_forest",
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0
+    },
+    {
+      "model": "gradient_boosting",
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0
+    },
+    {
+      "model": "xgboost",
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0
+    }
+  ]
+}

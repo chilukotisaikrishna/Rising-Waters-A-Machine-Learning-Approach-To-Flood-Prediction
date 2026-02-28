@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rising Waters | Flood Prediction</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-1hct5ZDV4SSQdlqzTeWY5Avzkdxl3pNGdisz8Iky3Uczdlz7YT1Do1B4ezgmO6ijLJrVN6M8GN28AL5OH6qd3Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    :root {
+      --primary: #0f2027;
+      --gradient-start: #2c5364;
+      --gradient-end: #0f2027;
+      --accent: #00c6ff;
+      --success: #00ff88;
+      --danger: #ff4d4d;
+    }
+    * { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+    body {
+      background: linear-gradient(-45deg, #2c5364, #0f2027, #0b1a22, #132c3a);
+      background-size: 400% 400%;
+      animation: gradientMove 18s ease infinite;
+      color: #e8f0f7;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body.light {
+      background: #e9f4ff;
+      color: #0f2027;
+    }
+    .glass {
+      backdrop-filter: blur(14px);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      border-radius: 18px;
+    }
+    body.light .glass {
+      background: rgba(255,255,255,0.75);
+      border-color: rgba(0,0,0,0.04);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+    }
+    .floating-label { position: relative; }
+    .floating-label input { padding-top: 1.2rem; }
+    .floating-label label {
+      position: absolute; left: 12px; top: 10px; font-size: 0.85rem;
+      color: #9fb3c8; transition: all 0.2s ease;
+    }
+    .floating-label input:focus + label,
+    .floating-label input:not(:placeholder-shown) + label,
+    .floating-label select:focus + label,
+    .floating-label select:not(:placeholder-shown) + label {
+      top: -8px; left: 10px; font-size: 0.75rem; color: var(--accent); background: transparent;
+    }
+    .btn-gradient {
+      background: linear-gradient(135deg, #00c6ff, #2c5364);
+      color: #0b1120;
+      border: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn-gradient:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(0,198,255,0.25); }
+    .btn-ghost { border: 1px solid rgba(255,255,255,0.3); color: #e8f0f7; }
+    .btn-ghost:hover { background: rgba(255,255,255,0.08); }
+    .particle { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.18); animation: float 12s infinite ease-in-out; opacity: 0.5; }
+    .wave-divider { position: relative; height: 80px; overflow: hidden; }
+    .wave-divider svg { position: absolute; bottom: 0; left: 0; width: 100%; }
+    .result-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .result-card:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(0,0,0,0.25); }
+    .risk-box { border: 1px solid rgba(255,255,255,0.15); }
+    .risk-high { background: rgba(255,77,77,0.1); box-shadow: 0 0 20px rgba(255,77,77,0.35); border-color: var(--danger); }
+    .risk-low { background: rgba(0,255,136,0.08); box-shadow: 0 0 20px rgba(0,255,136,0.35); border-color: var(--success); }
+    .progress { height: 12px; border-radius: 20px; background: rgba(255,255,255,0.1); }
+    .progress-bar { background: linear-gradient(90deg, #00c6ff, #00ff88); box-shadow: 0 6px 18px rgba(0,255,136,0.35); }
+    .risk-box .progress-bar { width: var(--prob); }
+    .circle-wrap { width: 110px; height: 110px; position: relative; }
+    .circle-wrap .circle { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(var(--accent) var(--deg), rgba(255,255,255,0.08) 0deg); display: grid; place-items: center; }
+    .circle-wrap .inner { width: 80px; height: 80px; border-radius: 50%; background: rgba(0,0,0,0.6); display: grid; place-items: center; color: #e8f0f7; font-weight: 700; }
+    body.light .circle-wrap .inner { background: #fff; color: #0f2027; }
+    .toggle-switch { cursor: pointer; }
+    .rippler { position: relative; overflow: hidden; }
+    .rippler:after { content:""; position:absolute; inset:0; background: radial-gradient(circle, rgba(255,255,255,0.25) 10%, transparent 10%); background-size:20% 20%; opacity:0; transition: opacity 0.3s ease; }
+    .rippler:active:after { opacity:1; animation: ripple 0.6s ease-out; }
+    .loading-spinner { display: none; }
+    .loading .loading-spinner { display: inline-block; }
+    .loading .btn-text { display: none; }
+    @keyframes gradientMove { 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
+    @keyframes float { 0%{ transform: translateY(0); opacity:0.4;} 50%{ transform: translateY(-20px); opacity:0.8;} 100%{ transform: translateY(0); opacity:0.4;} }
+    @keyframes ripple { from { transform: scale(0); opacity: 0.5; } to { transform: scale(4); opacity: 0; } }
+  </style>
+</head>
+<body class="min-vh-100">
+  <!-- floating particles -->
+  <span class="particle" style="width:18px;height:18px;left:10%;top:30%;animation-delay:0s"></span>
+  <span class="particle" style="width:12px;height:12px;left:70%;top:20%;animation-delay:2s"></span>
+  <span class="particle" style="width:16px;height:16px;left:50%;top:60%;animation-delay:4s"></span>
+  <span class="particle" style="width:10px;height:10px;left:85%;top:45%;animation-delay:1s"></span>
+
+  <nav class="navbar navbar-expand-lg navbar-dark pt-3 px-4">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">🌊 Rising Waters</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="#predict">Predict</a></li>
+          <li class="nav-item"><a class="nav-link" href="#result">Result</a></li>
+        </ul>
+        <div class="form-check form-switch text-light toggle-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="modeToggle">
+          <label class="form-check-label" for="modeToggle"><i class="fa-solid fa-circle-half-stroke"></i></label>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <header class="container text-center py-5" id="hero">
+    <p class="badge rounded-pill text-bg-info bg-opacity-25 px-3 py-2">AI Powered Flood Risk Prediction</p>
+    <h1 class="display-5 fw-bold mt-3">Rising Waters</h1>
+    <p class="lead text-light-50">Premium AI SaaS to anticipate floods using rainfall and climate signals.</p>
+  </header>
+
+  <div class="wave-divider">
+    <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+      <path d="M0,0V46.29c47.79,22.2,103.59,32,158,28,70-5,136-33,206-38,73-6,142,14,215,22,72,7,146-1,218-15C861.45,28.6,931,6,1005,0c69-6,135,6,195,22V0Z" fill="rgba(255,255,255,0.08)"></path>
+    </svg>
+  </div>
+
+  <main class="container pb-5" id="predict">
+    <div class="row g-4 align-items-start">
+      <div class="col-lg-7">
+        <div class="glass p-4" id="form-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Enter Details</h4>
+            <div class="d-flex gap-2">
+              <button id="fill-random" type="button" class="btn btn-ghost btn-sm rippler"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>Sample Data</button>
+            </div>
+          </div>
+          {% if error %}
+            <div class="alert alert-danger py-2">{{ error }}</div>
+          {% endif %}
+          <form method="POST" action="/predict" id="predict-form" class="row g-3 needs-validation" novalidate>
+            <div class="col-md-6 floating-label">
+              <select class="form-control bg-transparent text-light" name="state" required>
+                <option value="" disabled {% if not form_values %}selected{% endif %}></option>
+                {% for st in ['Maharashtra','West Bengal','Assam','Bihar','Uttar Pradesh','Gujarat','Punjab','Karnataka','Kerala','Tamil Nadu','Odisha','Andhra Pradesh'] %}
+                  <option value="{{st}}" {% if form_values and form_values.state==st %}selected{% endif %}>{{st}}</option>
+                {% endfor %}
+              </select>
+              <label>State</label>
+            </div>
+            <div class="col-md-6 floating-label">
+              <input type="number" class="form-control bg-transparent text-light" name="year" placeholder=" " value="{{ form_values.year if form_values }}" required>
+              <label>Year</label>
+            </div>
+            <div class="col-md-6 floating-label">
+              <input type="number" step="0.01" class="form-control bg-transparent text-light" name="rainfall" placeholder=" " value="{{ form_values.annual_rainfall if form_values }}" required>
+              <label>Annual Rainfall</label>
+            </div>
+            <div class="col-md-6 floating-label">
+              <input type="number" step="0.01" class="form-control bg-transparent text-light" name="previous_year_rainfall" placeholder=" " value="{{ form_values.previous_year_rainfall if form_values }}">
+              <label>Previous Year Rainfall</label>
+            </div>
+            <div class="col-md-6 floating-label">
+              <input type="number" step="0.1" class="form-control bg-transparent text-light" name="avgjune" placeholder=" " value="{{ form_values.avgjune if form_values }}">
+              <label>Avg June Rain</label>
+            </div>
+            <div class="col-md-6 floating-label">
+              <input type="number" step="0.1" class="form-control bg-transparent text-light" name="temp" placeholder=" " value="{{ form_values.Temp if form_values }}">
+              <label>Temperature (°C)</label>
+            </div>
+            <div class="col-md-4 floating-label">
+              <input type="number" step="0.1" class="form-control bg-transparent text-light" name="humidity" placeholder=" " value="{{ form_values.Humidity if form_values }}">
+              <label>Humidity (%)</label>
+            </div>
+            <div class="col-md-4 floating-label">
+              <input type="number" step="0.1" class="form-control bg-transparent text-light" name="cloud_cover" placeholder=" " value="{{ form_values['Cloud Cover'] if form_values }}">
+              <label>Cloud Cover (%)</label>
+            </div>
+            <div class="col-md-4 floating-label">
+              <input type="number" step="0.1" class="form-control bg-transparent text-light" name="sub" placeholder=" " value="{{ form_values.sub if form_values }}">
+              <label>Sub-basin Total</label>
+            </div>
+
+            <div class="col-12 d-flex gap-2 mt-2">
+              <button class="btn btn-gradient w-100 rippler" type="submit" id="predict-btn">
+                <span class="btn-text"><i class="fa-solid fa-cloud-bolt me-2"></i>Predict Risk</span>
+                <span class="spinner-border spinner-border-sm text-dark loading-spinner" role="status"></span>
+              </button>
+              <button class="btn btn-outline-light w-50 rippler" type="button" id="fill-random-2"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-lg-5" id="result">
+        <div class="glass p-4 result-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Prediction Result</h5>
+            <i class="fa-solid fa-shield-heart text-info"></i>
+          </div>
+          {% set prob_val = (result.prob.replace('%','') | float) if result else 0 %}
+          {% if result %}
+            <div class="p-3 rounded risk-box {{ 'risk-high' if result.risk=='High' else 'risk-low' }}" style="--prob: {{ prob_val }}%;">
+              <div class="d-flex align-items-center gap-3">
+                <div class="circle-wrap">
+                  <div class="circle" style="--deg: {{ prob_val*3.6 }}deg;">
+                    <div class="inner">{{ result.prob }}</div>
+                  </div>
+                </div>
+                <div>
+                  <h4 class="mb-1">Flood Risk: <span class="fw-bold">{{ result.risk }}</span></h4>
+                  <p class="mb-2 text-opacity-75">Probability based on the provided parameters.</p>
+                  <div class="progress">
+                    <div class="progress-bar" role="progressbar" aria-valuenow="{{ prob_val }}" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <div class="text-muted">Fill the form and click Predict to view the AI-generated risk.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="container text-center pb-4 pt-2">
+    <div class="d-flex justify-content-center gap-3 mb-2">
+      <a class="text-light" href="#"><i class="fab fa-twitter"></i></a>
+      <a class="text-light" href="#"><i class="fab fa-linkedin"></i></a>
+      <a class="text-light" href="#"><i class="fab fa-github"></i></a>
+    </div>
+    <small class="text-muted">Developed by Teja Nadella</small>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const fillData = () => {
+      const rand = (min, max, fixed=0) => (Math.random() * (max - min) + min).toFixed(fixed);
+      const data = {
+        state: 'Maharashtra',
+        year: Math.floor(2000 + Math.random() * 25),
+        rainfall: rand(600, 2000, 1),
+        previous_year_rainfall: rand(500, 1800, 1),
+        avgjune: rand(100, 300, 1),
+        temp: rand(25, 33, 1),
+        humidity: rand(60, 85, 1),
+        cloud_cover: rand(20, 80, 1),
+        sub: rand(200, 800, 1),
+      };
+      Object.entries(data).forEach(([k,v]) => {
+        const input = document.querySelector(`[name="${k}"]`);
+        if (input) input.value = v;
+      });
+    };
+    document.getElementById('fill-random')?.addEventListener('click', fillData);
+    document.getElementById('fill-random-2')?.addEventListener('click', fillData);
+
+    const modeToggle = document.getElementById('modeToggle');
+    modeToggle?.addEventListener('change', () => {
+      document.body.classList.toggle('light');
+    });
+
+    const form = document.getElementById('predict-form');
+    const btn = document.getElementById('predict-btn');
+    form?.addEventListener('submit', () => {
+      btn.classList.add('loading');
+      setTimeout(()=>btn.classList.remove('loading'), 3000);
+    });
+  </script>
+</body>
+</html>
